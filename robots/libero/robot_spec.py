@@ -249,6 +249,12 @@ def _add_cli_args(parser: argparse.ArgumentParser, use_dashboard: bool) -> None:
         "If unset, a local vla_server is spawned.",
     )
     parser.add_argument(
+        "--vla-timeout-s",
+        type=float,
+        default=120.0,
+        help="Timeout in seconds for each VLA prediction (default: 120).",
+    )
+    parser.add_argument(
         "--molmo-endpoint",
         default=None,
         help="[protocol://]host:port of an existing Molmo server "
@@ -532,7 +538,13 @@ def _init_runtime(
                 },
             )
         },
-        "vla": lambda rpc: {"model": Pi05VLAClient(rpc, embodiment="libero")},
+        "vla": lambda rpc: {
+            "model": Pi05VLAClient(
+                rpc,
+                embodiment="libero",
+                request_timeout_s=getattr(args, "vla_timeout_s", 120.0),
+            )
+        },
         "sam3": lambda rpc: {"sam3_client": Sam3Client(rpc)},
         "molmo": lambda rpc: {"molmo_client": MolmoClient(rpc)},
     }
