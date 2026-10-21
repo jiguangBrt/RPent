@@ -90,6 +90,9 @@ def build_env_cfg(
                 # from depth + camera calibration
                 "camera_depths": True,
                 "horizon": max_episode_steps,
+                # RLinf owns truncation after reset's settling steps. LIBERO
+                # still reports task success via its own _check_success().
+                "ignore_done": True,
                 **(
                     {"robots": [os.environ["LIBERO_ROBOT_BASE"]]}
                     if os.environ.get("LIBERO_ROBOT_BASE")
