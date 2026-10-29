@@ -192,6 +192,31 @@ def test_libero_prompts_observe_task_before_reading_memory(
     )
 
 
+@pytest.mark.parametrize(
+    ("mode", "memory_profile"),
+    [("eval", "hf"), ("eval", "local"), ("explore", "local")],
+)
+def test_libero_rendered_prompts_preserve_task_left_right_reference(
+    mode: str, memory_profile: str
+) -> None:
+    variables = {
+        **PROMPT_VARIABLES["libero"],
+        "mode": mode,
+        "memory_profile": memory_profile,
+    }
+    system = get_robot_spec("libero").prompts.render("system", variables=variables)
+    normalized = " ".join(system.split())
+
+    assert "image-left = lower world y; image-right = higher world y" in normalized
+    assert "white mug to the image-left plate" in normalized
+    assert "yellow-and-white mug to the image-right plate" in normalized
+    assert "pudding on the image-right side of the plate" in normalized
+    assert "task_relation" in system
+    assert "EGOCENTRIC (robot frame)" not in system
+    assert '"LEFT" = +y' not in system
+    assert 'trained "left"' not in system
+
+
 @pytest.mark.parametrize("robot_name", EXPECTED_ROBOTS)
 def test_dashboard_metadata_has_consistent_fields_and_runtime_components(
     robot_name: str,
