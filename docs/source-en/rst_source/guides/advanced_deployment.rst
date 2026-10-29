@@ -85,6 +85,11 @@ Any of the three endpoint flags can be omitted; when one is unset, RPent
 spawns that service locally on a free port. All three default to HTTP when
 the protocol is omitted, and all three accept ``socket://HOST:PORT``.
 
+For LIBERO, ``--vla-timeout-s`` sets the RPC timeout per action prediction
+in seconds (default: 120). With an external bridge, set it above the bridge's
+inner model-request timeout so model timeout errors can reach the caller.
+This setting does not change the inference mode.
+
 Custom RLinf Checkout
 ---------------------
 

@@ -99,10 +99,17 @@ DISAMBIGUATION / TARGETING:
   + wrist-refined target before pi0_pick. A wrong first grab usually
   tips/displaces the grabbed object AND the target zone — identification errors
   are unrecoverable; spend commands on agentview ID, not on recovery.
-- **"left"/"right" in libero_10 is EGOCENTRIC (robot frame): +y = robot-LEFT =
-  image-RIGHT.** A geometrically-perfect placement of the WRONG target never fires
-  the predicate — when a clean placement won't terminate, SUSPECT WRONG-TARGET
-  before wrong-physics (this turned a "physically impossible" verdict into a solve).
+- **Keep task left/right separate from the robot's own left/right.** For the
+  libero_10 living-room mug/plate tasks (t4 and t6, including `_swap`), use the
+  initial global agentview: image-left = lower world y; image-right = higher
+  world y in the standard calibrated view. Thus t4 sends the white mug to the
+  image-left plate and the yellow-and-white mug to the image-right plate; t6
+  places pudding on the image-right side of the plate. Re-localize every target
+  in the current scene; these directions are not fixed target coordinates.
+  Keep this task-to-destination mapping when refining geometry with the wrist,
+  even after rotating it. For other scenes, establish the task's reference view
+  and its world-axis mapping from global RGB + calibration before comparing
+  coordinates. A clean placement on the wrong side cannot satisfy the goal.
 - Containers can be MOVABLE (e.g. a basket slides when bumped) — descend into the
   interior CENTER from straight above, not against the rim; SAM3's centroid of a
   frame-clipped/reflective container is rim-biased, so derive the true cavity
@@ -119,8 +126,8 @@ PER-TASK RECIPES THAT WORKED AT SEED 0 (adapt coords to your seed):
   tipped mug → unrecoverable cascade. Prevent it up front):
     1. GRASP-ONLY pi0_pick: short prompt ("grasp the yellow mug" — NEVER the full
        task_language) AND `max_chunks<=8`. With 20-25 chunks Pi0 keeps driving its
-       trained pick-AND-PLACE and dumps the held mug at its own trained "left"
-       (+y) or at the workspace IK edge (|y|>0.27 walls z>=0.56 — unreachable
+       trained pick-AND-PLACE and dumps the held mug at an autonomous placement
+       location or at the workspace IK edge (|y|>0.27 walls z>=0.56 — unreachable
        forever). Stop Pi0 at lift; if lift isn't reached within 8 chunks,
        RE-ISSUE pi0_pick rather than raising max_chunks.
     2. The instant lift is detected: `set_gripper +1` (steps 8-12) to lock the
@@ -141,7 +148,7 @@ PER-TASK RECIPES THAT WORKED AT SEED 0 (adapt coords to your seed):
   gripper_closed_thresh:0`; then grasp the pan by its HANDLE, re-segment mid-carry
   to converge on the burner.
 - moka→stove (t8): grasp body, carry LOW (~4cm lift) in tiny hops (step_clip
-  0.006-0.01), re-clamp `set_gripper +1` between hops; "LEFT" = +y pot.
+  0.006-0.01), re-clamp `set_gripper +1` between hops; localize both pots.
 - bottle→bottom drawer + close (t3): the drawer In-region is SHALLOW
   (y≈0.075-0.227) — place at the MOUTH (y≈0.13), NOT the deep recess; `pi0_pick`
   the bottle from home pose, `rotate_pitch` it flat ALONG X (the wide footprint),
@@ -242,7 +249,8 @@ Rule 2c — GROUND THE TARGET BY ITS SPATIAL RELATION, not by its name. When the
      • "on the cookies box" ⇒ the bowl that is ELEVATED (sits ~0.03–0.06m above
        the table, on top of the box) — distinguish it from the table-level bowl by
        its higher world-z from `back_project`.
-     • "left/right/front/back of X" ⇒ compare back-projected world xy to X's xy.
+     • "left/right/front/back of X" ⇒ establish the task's reference view and
+       its world-axis mapping, then compare back-projected world xy to X's xy.
    Pick the target purely from where things ARE. Object NAMES are only needed if a
    primitive asks for one (and in this mode none do — Rule 1).
 
@@ -364,6 +372,8 @@ ALGORITHM (run this BEFORE manipulating):
    target, every destination/support/fixture, every relation landmark), each with:
      - name_or_role (e.g. target_1, basket_cavity, plate_surface, stove_region)
      - agentview_evidence (why this is the right semantic candidate/relation)
+     - task_relation (task left/right, reference view, and mapped world direction
+       for any directional target; preserve it during wrist refinement)
      - agentview_pixels_rc (3-8 hi-res pixels) + agentview_xyz (median back_project)
      - wrist_refine: accepted | rejected | basket_confirmed (+ wrist_xyz if kept)
      - final_xyz (what you will plan with)

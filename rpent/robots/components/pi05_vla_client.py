@@ -24,6 +24,7 @@ Add a new encoder function and register it there per embodiment.
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 import numpy as np
@@ -221,8 +222,11 @@ class Pi05VLAClient(BaseVLAClient):
     selects the obs encoder from ``_ENCODE_OBS``.
     """
 
-    def __init__(self, client, *, embodiment: str):
+    def __init__(self, client, *, embodiment: str, request_timeout_s: float = 120.0):
         super().__init__(client)
+        if not math.isfinite(request_timeout_s) or request_timeout_s <= 0:
+            raise ValueError("request_timeout_s must be finite and positive")
+        self._TIMEOUT_S = {**self._TIMEOUT_S, "predict": request_timeout_s}
         if embodiment not in _ENCODE_OBS:
             raise ValueError(
                 f"unknown pi05 client embodiment: {embodiment!r}; "

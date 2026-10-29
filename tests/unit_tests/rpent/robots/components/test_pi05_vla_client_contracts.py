@@ -12,10 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from unittest.mock import Mock
+
 import numpy as np
 import pytest
 
 from rpent.robots.components.pi05_vla_client import Pi05VLAClient
+
+
+def test_prediction_timeout_is_per_client_and_reaches_rpc():
+    rpc = Mock()
+    rpc.call.return_value = np.zeros((1, 10, 7), dtype=np.float32)
+    client = Pi05VLAClient(rpc, embodiment="libero", request_timeout_s=315)
+    default = Pi05VLAClient(None, embodiment="libero")
+    client.predict(
+        {
+            "main_images": np.zeros((2, 2, 3), dtype=np.uint8),
+            "states": np.zeros(8),
+            "task_descriptions": "test",
+        }
+    )
+    assert rpc.call.call_args.kwargs["timeout_s"] == 315
+    assert default._TIMEOUT_S["predict"] == 120
+
+
+@pytest.mark.parametrize("timeout", [0, -1, float("nan"), float("inf")])
+def test_invalid_prediction_timeout_is_rejected(timeout):
+    with pytest.raises(ValueError, match="finite and positive"):
+        Pi05VLAClient(None, embodiment="libero", request_timeout_s=timeout)
 
 
 @pytest.fixture

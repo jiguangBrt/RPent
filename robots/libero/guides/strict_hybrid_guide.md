@@ -244,7 +244,18 @@ for you; the RELATION disambiguates:
 - "on the cookies box" ⇒ the bowl that is **elevated** (~0.03–0.06 m above the
   table, on the box) — distinguish it by its higher world-z from `back_project`
   vs the table-level bowl.
-- "left/right/front/back of X" ⇒ compare back-projected world xy to X's xy.
+- "left/right/front/back of X" ⇒ first establish the task's reference view and
+  its world-axis mapping, then compare back-projected world xy to X's xy.
+
+Task left/right does not automatically mean the robot's own left/right. For
+the `libero_10` living-room mug/plate tasks (t4/t6, including `_swap`), task left
+is image-left (lower world y) and task right is image-right (higher world y) in
+the initial standard agentview. White mug → image-left plate and yellow-white
+mug → image-right plate in t4; pudding → image-right of the plate in t6.
+Localize actual positions from the current scene. Record the task relation,
+reference view, and mapped world direction in the localization table; wrist
+refinement or rotation must preserve this mapping. For other scenes, derive
+the view-to-world mapping from global RGB and camera calibration.
 
 Pick the target purely from where things ARE. (You never need to know which
 `_N` name the target is — no primitive in this mode asks for one.)
